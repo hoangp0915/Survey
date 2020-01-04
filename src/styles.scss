@@ -1,1 +1,31 @@
+@import 'themes';
+
+@import '~@nebular/theme/styles/globals';
+@import "~font-awesome/css/font-awesome.css";
+
+@include nb-install() {
+  @include nb-theme-global();
+}
+
+;
+
 /* You can add global styles to this file, and also import other style files */
+.checkboxInput label.label {
+  width: 100% !important;
+
+  .text {
+    width: 100% !important;
+  }
+}
+.checkboxInput label {
+  padding: 0 !important;
+  width: 100% !important;
+
+  .text {
+    width: 100% !important;
+  }
+}
+
+.cursor-move{
+  cursor: move;
+}

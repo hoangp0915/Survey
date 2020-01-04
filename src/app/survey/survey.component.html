@@ -1,0 +1,135 @@
+<nb-card>
+  <nb-card-header>
+    Survey
+  </nb-card-header>
+  <nb-card-body>
+    <div class="row">
+      <div class="col-3">
+        <label for="">Loại câu hỏi</label>
+        <nb-list dragula="COPYABLE" id="left" [(dragulaModel)]="questionType">
+          <nb-list-item *ngFor="let type of questionType" class="cursor-move">
+            {{ type.title }}
+          </nb-list-item>
+        </nb-list>
+      </div>
+      <div class="col-9" [formGroup]="surveyForm">
+        <div class="row">
+          <div class="col-12">
+            <label for="">Tên khảo sát</label>
+            <input type="text" nbInput fullWidth formControlName="name" fieldSize="small" placeholder="Text field">
+          </div>
+        </div>
+        <div dragula="COPYABLE" id="right" [(dragulaModel)]="surveyForm.get('questions').value">
+          <div class="row mt-2" formArrayName="questions"
+            *ngFor="let item of surveyForm.get('questions').controls; let indexQuestion = index;">
+            <div class="col-12" [formGroupName]="indexQuestion">
+              <nb-card accent="primary">
+                <nb-card-body>
+                  <!-- Câu hỏi -->
+                  <div class="row mb-4">
+                    <div class="col-9">
+                      <input nbInput fullWidth fieldSize="small" appSelect formControlName="question"
+                        class="form-control" type="text" name="name" />
+                    </div>
+                    <div class="col-3">
+                      <nb-select placeholder="Select Showcase" size="small" fullWidth formControlName="type">
+                        <nb-option *ngFor="let item of questionType" [value]="item.type">{{item.title}}</nb-option>
+                      </nb-select>
+                    </div>
+                  </div>
+                  <!-- Câu trả lời -->
+                  <div formArrayName="answers">
+                    <div class="row mb-3">
+                      <!-- nhieu cau tra loi -->
+                      <div class="col-12"
+                        *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.checkbox || surveyForm.get('questions.' + indexQuestion + '.type').value === questType.radio">
+                        <div class="row">
+                          <div class="col-12">
+                            <table style="width: 100%;">
+                              <tbody>
+                                <tr
+                                  *ngFor="let item of surveyForm.get('questions.'+ indexQuestion + '.answers').controls; let indexA = index;"
+                                  [formGroupName]="indexA">
+                                  <td>
+                                    <i class="fas fa-grip-horizontal"></i>
+                                  </td>
+                                  <td>
+                                    <div
+                                      *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.checkbox">
+                                      <nb-checkbox class="checkboxInput">
+                                        <input nbInput fullWidth fieldSize="small" formControlName="answer"
+                                          class="form-control" type="text" name="name" />
+                                      </nb-checkbox>
+                                    </div>
+                                    <div
+                                      *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.radio">
+                                      <nb-radio-group>
+                                        <nb-radio class="checkboxInput">
+                                          <input nbInput fullWidth fieldSize="small" formControlName="answer"
+                                            class="form-control" type="text" name="name" />
+                                        </nb-radio>
+                                      </nb-radio-group>
+                                    </div>
+                                  </td>
+                                  <td style="width: 6%;" class="pl-2">
+                                    <button nbButton tooltipPosition="top" status="danger" size="small"
+                                      (click)="removeAnswer(indexQuestion, indexA)" class="mr-2">
+                                      <nb-icon icon="trash-2-outline"></nb-icon>
+                                    </button></td>
+                                </tr>
+                                <tr>
+                                  <td></td>
+                                  <td>
+                                  </td>
+                                  <td style="width: 6%;" class="pl-2"><button nbButton tooltipPosition="top"
+                                      status="info" size="small" (click)="addAnswer(indexQuestion)" class="mr-2">
+                                      <nb-icon icon="plus-circle-outline"></nb-icon>
+                                    </button></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12">
+
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Input -->
+                      <div class="col-12"
+                        *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.input">
+                        <textarea nbInput fullWidth placeholder="Tu nhap cau tra loi" readonly></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- <div class="row mt-3">
+                  
+                </div> -->
+
+                </nb-card-body>
+                <nb-card-footer>
+                  <div class="d-flex flex-row-reverse bd-highlight">
+                    <button nbButton tooltipPosition="top" status="danger" [disabled]="questions.length === 1"
+                      size="small" (click)="removeQuestion(indexQuestion)" class="mr-2">
+                      <nb-icon icon="trash-2-outline"></nb-icon>
+                    </button></div>
+                </nb-card-footer>
+              </nb-card>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <pre>{{ surveyForm.get('questions').value | json }}</pre> -->
+    </div>
+    <div class="row mt-3">
+      <div class="col-12 d-flex flex-row-reverse bd-highlight">
+        <button nbButton tooltipPosition="top" status="info" size="small" (click)="save()" class="mr-2">
+          <nb-icon icon="save-outline"></nb-icon>
+          Save
+        </button>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

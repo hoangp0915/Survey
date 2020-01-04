@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { GetDataService } from './services/get-data.service';
 
 @Component({
   selector: 'app-root',
