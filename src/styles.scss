@@ -1,7 +1,7 @@
 @import 'themes';
 
 @import '~@nebular/theme/styles/globals';
-@import "~font-awesome/css/font-awesome.css";
+// @import "~font-awesome/css/font-awesome.css";
 
 @include nb-install() {
   @include nb-theme-global();
@@ -28,4 +28,7 @@
 
 .cursor-move{
   cursor: move;
+}
+.cursor-pointer{
+  cursor: pointer;
 }

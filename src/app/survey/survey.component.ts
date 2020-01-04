@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { GetDataService } from '../services/get-data.service';
-import { CdkDragDrop, moveItemInArray, transferArrayItem, copyArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, transferArrayItem, copyArrayItem, CdkDragStart, CdkDragMove } from '@angular/cdk/drag-drop';
 import { Tasks } from '../modal/Task';
 import * as _ from 'lodash';
 import { DragulaService } from 'ng2-dragula';
@@ -22,7 +22,7 @@ export enum QuestionType {
   providers: [DragulaService]
 })
 export class SurveyComponent implements OnInit, OnDestroy {
-  @ViewChild('select', { static: false }) input: ElementRef;
+  @ViewChild('myInput', { static: false }) myInput: ElementRef;
   surveyForm: FormGroup;
   listTask = [];
   questType = QuestionType;
@@ -52,27 +52,10 @@ export class SurveyComponent implements OnInit, OnDestroy {
       icon: ''
     }
   ];
-  constructor(private getDataService: GetDataService, private dragula: DragulaService, private fb: FormBuilder) {
+  constructor(private getDataService: GetDataService, private fb: FormBuilder) {
     this.createForm();
-    dragula.createGroup('COPYABLE', {
-      copy: (el, source) => {
-        return source.id === 'left';
-      },
-      copyItem: (questionType: any) => {
-        this.dragQuestion(questionType.type);
-        return { type: questionType.type };
-      },
-      accepts: (el, target, source, sibling) => {
-        return target.id !== 'left';
-      }
-    });
-
   }
   ngOnInit(): void {
-    // this.getDataService.getData().subscribe((res: any[]) => {
-    //   console.log('TCL: AppComponent -> res', res);
-    //   this.listTask = res;
-    // });
     this.setDefaultData()
   }
   createForm() {
@@ -85,6 +68,7 @@ export class SurveyComponent implements OnInit, OnDestroy {
     return this.fb.group({
       type: [this.questType.checkbox],
       question: [''],
+      required: [false],
       answers: this.fb.array([])
     });
   }
@@ -97,9 +81,10 @@ export class SurveyComponent implements OnInit, OnDestroy {
   setDefaultData() {
     this.surveyForm.get('name').setValue('Mẫu không có tiêu đề');
     this.questions.push(this.createQuestion());
+    this.questions.get(`${0}.question`).setValue(`Câu hỏi 1`);
     const answers = this.questions.get(`${0}.answers`) as FormArray;
     answers.push(this.createAnswer());
-    answers.get(`${0}.answer`).setValue(`Tùy chọn 1`)
+    answers.get(`${0}.answer`).setValue(`Câu trả lời 1`);
   }
 
   setDataForm(data) {
@@ -112,26 +97,15 @@ export class SurveyComponent implements OnInit, OnDestroy {
     });
   }
 
-  dragQuestion(type) {
-    this.lisSub.push(
-      this.dragula.dropModel('COPYABLE').pipe(take(1)).subscribe(res => {
-        if (res.source.id === 'left') {
-          this.questions.insert(res.targetIndex, this.createQuestion());
-          this.questions.get(`${res.targetIndex}.type`).setValue(type);
-          this.questions.get(`${res.targetIndex}.question`).setValue(`Câu hỏi không có tiêu đề`);
-          const answers = this.questions.get(`${res.targetIndex}.answers`) as FormArray;
-          answers.push(this.createAnswer());
-          answers.push(this.createAnswer());
-          answers.controls.forEach((item, index) => {
-            answers.get(`${index}.answer`).setValue(`Tùy chọn ${index + 1}`);
-          });
-        }
-      })
-    );
+  get questions(): FormArray {
+    return this.surveyForm.get('questions') as FormArray;
   }
 
-  get questions() {
-    return this.surveyForm.get('questions') as FormArray;
+  addQuestion(index?: number) {
+    this.questions.push(this.createQuestion());
+    setTimeout(() => {
+      document.getElementById(`question_${index}`).focus();
+    }, 20);
   }
 
   removeQuestion(indexQ) {
@@ -139,18 +113,57 @@ export class SurveyComponent implements OnInit, OnDestroy {
     this.questions.removeAt(indexQ);
   }
 
-  addAnswer(indexQ){
+  addAnswer(indexQ) {
     const answers = this.questions.get(`${indexQ}.answers`) as FormArray;
     answers.push(this.createAnswer());
+    answers.get(`${answers.length - 1}.answer`).setValue(`Câu trả lời ${answers.length}`);
+    console.log('question_' + indexQ + '_answer_' + (answers.length - 1));
+    setTimeout(() => {
+      document.getElementById(`question_${indexQ}_answer_${answers.length - 1}`).focus();
+    }, 20);
   }
 
-  removeAnswer(indexQ, indexA){
+  removeAnswer(indexQ, indexA) {
     const answers = this.questions.get(`${indexQ}.answers`) as FormArray;
     answers.removeAt(indexA);
   }
 
   save() {
     console.log(this.surveyForm.value);
+  }
+
+  itemDropped(event: CdkDragDrop<any[]>, indexQ?: number) {
+    // currentIndex: questionIndex
+    if (event.previousContainer === event.container) {
+      const dir = event.currentIndex > event.previousIndex ? 1 : -1;
+      const from = event.previousIndex;
+      const to = event.currentIndex;
+      if (indexQ !== undefined) {
+        const answers = this.questions.get(`${indexQ}.answers`) as FormArray;
+        this.setControl(from, dir, to, answers);
+      } else {
+        this.setControl(from, dir, to, this.questions);
+      }
+    } else {
+      this.questions.insert(event.currentIndex, this.createQuestion());
+      this.questions.get(`${event.currentIndex}.question`).setValue(`Câu hỏi ${event.currentIndex + 1}`);
+      this.questions.get(`${event.currentIndex}.type`).setValue(event.item.data.type);
+      const answers = this.questions.get(`${event.currentIndex}.answers`) as FormArray;
+      answers.push(this.createAnswer());
+      answers.get(`${0}.answer`).setValue(`Câu trả lời 1`);
+      setTimeout(() => {
+        document.getElementById(`question_${event.currentIndex}`).focus();
+      }, 20);
+    }
+  }
+
+  setControl(from, dir, to, controls: FormArray) {
+    const temp = controls.at(from);
+    for (let i = from; i * dir < to * dir; i = i + dir) {
+      const current = controls.at(i + dir);
+      controls.setControl(i, current);
+    }
+    controls.setControl(to, temp);
   }
 
   ngOnDestroy(): void {

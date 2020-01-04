@@ -5,116 +5,136 @@
   <nb-card-body>
     <div class="row">
       <div class="col-3">
-        <label for="">Loại câu hỏi</label>
-        <nb-list dragula="COPYABLE" id="left" [(dragulaModel)]="questionType">
-          <nb-list-item *ngFor="let type of questionType" class="cursor-move">
-            {{ type.title }}
-          </nb-list-item>
-        </nb-list>
+        <nb-card>
+          <nb-card-header>
+            Loại câu hỏi
+          </nb-card-header>
+          <nb-card-body>
+            <nb-list>
+              <nb-list-item class="cursor-move" *ngFor="let type of questionType" cdkDrag cdkDropList
+                cdkDropListConnectedTo="drop-list" [cdkDragData]="type">
+                {{ type.title }}
+              </nb-list-item>
+            </nb-list>
+          </nb-card-body>
+        </nb-card>
       </div>
       <div class="col-9" [formGroup]="surveyForm">
         <div class="row">
           <div class="col-12">
             <label for="">Tên khảo sát</label>
-            <input type="text" nbInput fullWidth formControlName="name" fieldSize="small" placeholder="Text field">
+            <input type="text" appSelect nbInput fullWidth formControlName="name" fieldSize="small" placeholder="Text field">
           </div>
         </div>
-        <div dragula="COPYABLE" id="right" [(dragulaModel)]="surveyForm.get('questions').value">
+        <div cdkDropList id="drop-list" (cdkDropListDropped)="itemDropped($event)"
+          [cdkDropListData]="surveyForm.get('questions').controls">
           <div class="row mt-2" formArrayName="questions"
-            *ngFor="let item of surveyForm.get('questions').controls; let indexQuestion = index;">
+            *ngFor="let item of surveyForm.get('questions').controls; let indexQuestion = index;" cdkDrag
+            cdkDragLockAxis="y">
             <div class="col-12" [formGroupName]="indexQuestion">
               <nb-card accent="primary">
                 <nb-card-body>
                   <!-- Câu hỏi -->
                   <div class="row mb-4">
                     <div class="col-9">
-                      <input nbInput fullWidth fieldSize="small" appSelect formControlName="question"
+                      <input nbInput id="{{ 'question_' + indexQuestion}}" fullWidth fieldSize="small" appSelect formControlName="question"
                         class="form-control" type="text" name="name" />
                     </div>
                     <div class="col-3">
-                      <nb-select placeholder="Select Showcase" size="small" fullWidth formControlName="type">
+                      <nb-select placeholder="Select Showcase" size="small" formControlName="type">
                         <nb-option *ngFor="let item of questionType" [value]="item.type">{{item.title}}</nb-option>
                       </nb-select>
                     </div>
                   </div>
                   <!-- Câu trả lời -->
-                  <div formArrayName="answers">
+                  <div formArrayName="answers" cdkDropList (cdkDropListDropped)="itemDropped($event, indexQuestion)"
+                    [cdkDropListData]="surveyForm.get('questions.'+ indexQuestion + '.answers').controls">
                     <div class="row mb-3">
-                      <!-- nhieu cau tra loi -->
+                      <!-- nhiều lựa chọn hoặc một lựa chọn -->
                       <div class="col-12"
                         *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.checkbox || surveyForm.get('questions.' + indexQuestion + '.type').value === questType.radio">
-                        <div class="row">
-                          <div class="col-12">
-                            <table style="width: 100%;">
-                              <tbody>
-                                <tr
-                                  *ngFor="let item of surveyForm.get('questions.'+ indexQuestion + '.answers').controls; let indexA = index;"
-                                  [formGroupName]="indexA">
-                                  <td>
-                                    <i class="fas fa-grip-horizontal"></i>
-                                  </td>
-                                  <td>
-                                    <div
-                                      *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.checkbox">
-                                      <nb-checkbox class="checkboxInput">
-                                        <input nbInput fullWidth fieldSize="small" formControlName="answer"
-                                          class="form-control" type="text" name="name" />
-                                      </nb-checkbox>
-                                    </div>
-                                    <div
-                                      *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.radio">
-                                      <nb-radio-group>
-                                        <nb-radio class="checkboxInput">
-                                          <input nbInput fullWidth fieldSize="small" formControlName="answer"
-                                            class="form-control" type="text" name="name" />
-                                        </nb-radio>
-                                      </nb-radio-group>
-                                    </div>
-                                  </td>
-                                  <td style="width: 6%;" class="pl-2">
-                                    <button nbButton tooltipPosition="top" status="danger" size="small"
-                                      (click)="removeAnswer(indexQuestion, indexA)" class="mr-2">
-                                      <nb-icon icon="trash-2-outline"></nb-icon>
-                                    </button></td>
-                                </tr>
-                                <tr>
-                                  <td></td>
-                                  <td>
-                                  </td>
-                                  <td style="width: 6%;" class="pl-2"><button nbButton tooltipPosition="top"
-                                      status="info" size="small" (click)="addAnswer(indexQuestion)" class="mr-2">
-                                      <nb-icon icon="plus-circle-outline"></nb-icon>
-                                    </button></td>
-                                </tr>
-                              </tbody>
-                            </table>
+                        <div class="row mb-2 "
+                          *ngFor="let item of surveyForm.get('questions.'+ indexQuestion + '.answers').controls; let indexA = index;"
+                          [formGroupName]="indexA" cdkDrag cdkDragLockAxis="y">
+                          <div class="col-12 d-flex bd-highlight align-items-center">
+                            <div class="px-2 bd-highlight">
+                              <nb-icon icon="grip-vertical" pack="fa" cdkDragHandle class="cursor-move"></nb-icon>
+                            </div>
+                            <div class="px-2 bd-highlight">
+                              <nb-icon
+                                *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.checkbox"
+                                class="colorIcon" icon="square" pack="fa"></nb-icon>
+                              <nb-icon
+                                *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.radio"
+                                icon="radio-button-off-outline"></nb-icon>
+                            </div>
+                            <div class="px-2 flex-grow-1 bd-highlight">
+                              <div
+                                *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.checkbox">
+                                <input appSelect id="{{ 'question_' + indexQuestion +'_answer_' + indexA}}" nbInput fullWidth fieldSize="small" formControlName="answer" class="form-control"
+                                  type="text" name="name" />
+                              </div>
+                              <div
+                                *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.radio">
+                                <input appSelect id="{{ 'question_' + indexQuestion +'_answer_' + indexA}}" nbInput fullWidth fieldSize="small" formControlName="answer" class="form-control"
+                                  type="text" name="name" />
+                              </div>
+                            </div>
+                            <div class="px-2 bd-highlight">
+                              <button nbButton tooltipPosition="top" nbTooltip="Xóa câu trả lời"
+                                nbTooltipStatus="controls" status="danger" size="small"
+                                (click)="removeAnswer(indexQuestion, indexA)"
+                                [disabled]="surveyForm.get('questions.'+ indexQuestion + '.answers').controls.length === 1">
+                                <i class="fa fa-times"></i>
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <div class="row">
-                          <div class="col-12">
+                          <div class="col-12 d-flex flex-row-reverse bd-highlight">
+                            <button nbButton tooltipPosition="top" status="info" size="small"
+                              (click)="addAnswer(indexQuestion)" nbTooltip="Thêm câu trả lời" nbTooltipStatus="controls"
+                              class="mr-2">
+                              <i class="fa fa-plus"></i>
+                            </button>
 
                           </div>
                         </div>
                       </div>
-                      <!-- Input -->
+                      <!-- Tụ nhập câu trả lời -->
                       <div class="col-12"
                         *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.input">
-                        <textarea nbInput fullWidth placeholder="Tu nhap cau tra loi" readonly></textarea>
+                        <input nbInput fullWidth placeholder="Tự nhập câu trả lời" readonly>
+                      </div>
+                      <!-- Đánh giá -->
+                      <div class="col-12"
+                        *ngIf="surveyForm.get('questions.' + indexQuestion + '.type').value === questType.rating">
+                        <input nbInput fullWidth placeholder="Tự nhập câu trả lời" readonly>
                       </div>
                     </div>
                   </div>
 
-                  <!-- <div class="row mt-3">
-                  
-                </div> -->
-
                 </nb-card-body>
                 <nb-card-footer>
-                  <div class="d-flex flex-row-reverse bd-highlight">
-                    <button nbButton tooltipPosition="top" status="danger" [disabled]="questions.length === 1"
-                      size="small" (click)="removeQuestion(indexQuestion)" class="mr-2">
-                      <nb-icon icon="trash-2-outline"></nb-icon>
-                    </button></div>
+                  <div class="row">
+                    <div class="col-3">
+                      <nb-icon icon="grip-vertical" pack="fa" cdkDragHandle class="cursor-move"></nb-icon>
+                    </div>
+                    <div class="col-9">
+                      <div class="d-flex flex-row-reverse bd-highlight align-items-center">
+                        <nb-actions>
+                          <nb-action icon="copy-outline" nbTooltip="Sao chép" nbTooltipStatus="controls"></nb-action>
+                          <nb-action status="danger" nbTooltip="Xóa câu hỏi" nbTooltipStatus="controls"
+                            [disabled]="questions.length === 1" (click)="removeQuestion(indexQuestion)">
+                            <nb-icon class="cursor-pointer" icon="trash-2-outline" status="danger"></nb-icon>
+                          </nb-action>
+                          <nb-action>
+                            <nb-checkbox formControlName="required">Bắt buộc</nb-checkbox>
+                          </nb-action>
+                        </nb-actions>
+                      </div>
+                    </div>
+                  </div>
                 </nb-card-footer>
               </nb-card>
             </div>

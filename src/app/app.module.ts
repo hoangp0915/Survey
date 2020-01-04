@@ -5,7 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 // tslint:disable-next-line: max-line-length
-import { NbThemeModule, NbLayoutModule, NbCardModule, NbListModule, NbInputModule, NbButtonModule, NbCheckboxModule, NbRadioModule, NbIconModule, NbSelectModule, NbUserModule } from '@nebular/theme';
+import { NbThemeModule, NbLayoutModule, NbCardModule, NbListModule, NbInputModule, NbButtonModule, NbCheckboxModule, NbRadioModule, NbIconModule, NbSelectModule, NbUserModule, NbToggleModule, NbActionsModule, NbTooltipModule } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { SurveyComponent } from './survey/survey.component';
 import { HttpClientModule } from '@angular/common/http';
@@ -23,7 +23,10 @@ const NEBULAR = [
   NbRadioModule,
   NbIconModule,
   NbSelectModule,
-  NbUserModule
+  NbUserModule,
+  NbToggleModule,
+  NbActionsModule,
+  NbTooltipModule
 ];
 
 @NgModule({
@@ -41,7 +44,7 @@ const NEBULAR = [
     NbLayoutModule,
     NbEvaIconsModule,
     ...NEBULAR,
-    // DragDropModule,
+    DragDropModule,
     DragulaModule,
     ReactiveFormsModule
   ],
