@@ -10,12 +10,14 @@
             Loại câu hỏi
           </nb-card-header>
           <nb-card-body>
-            <nb-list>
+            <nb-list #NbList>
               <nb-list-item class="cursor-move" *ngFor="let type of questionType" cdkDrag cdkDropList
-                cdkDropListConnectedTo="drop-list" [cdkDragData]="type">
+                cdkDropListConnectedTo="drop-list" [cdkDragData]="type"  (cdkDragStarted)="dragStart($event)"
+                (cdkDragMoved)="moved($event)">
                 {{ type.title }}
               </nb-list-item>
             </nb-list>
+            <pre>{{ questionType | json }}</pre>
           </nb-card-body>
         </nb-card>
       </div>
@@ -27,7 +29,8 @@
           </div>
         </div>
         <div cdkDropList id="drop-list" (cdkDropListDropped)="itemDropped($event)"
-          [cdkDropListData]="surveyForm.get('questions').controls">
+        [cdkDropListData]="surveyForm.get('questions').controls" 
+          >
           <div class="row mt-2" formArrayName="questions"
             *ngFor="let item of surveyForm.get('questions').controls; let indexQuestion = index;" cdkDrag
             cdkDragLockAxis="y">

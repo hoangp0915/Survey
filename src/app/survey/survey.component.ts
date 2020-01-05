@@ -8,6 +8,7 @@ import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
+import { NbListComponent } from '@nebular/theme';
 
 export enum QuestionType {
   rating = 'rating',
@@ -23,7 +24,7 @@ export enum QuestionType {
   providers: [DragulaService]
 })
 export class SurveyComponent implements OnInit, OnDestroy {
-  @ViewChild('myInput', { static: false }) myInput: ElementRef;
+  @ViewChild(NbListComponent, { static: false, read: ElementRef }) child: ElementRef;
   surveyForm: FormGroup;
   listTask = [];
   questType = QuestionType;
@@ -31,7 +32,9 @@ export class SurveyComponent implements OnInit, OnDestroy {
   listQuestion: string[] = ['1', '2', '3'];
   listQuestionType = [];
   lisSub: Subscription[] = [];
-  surveyCode;
+  surveyCode: string;
+  _currentIndex: number;
+  _currentField: any;
   questionType = [
     {
       title: 'Đánh giá',
@@ -98,14 +101,14 @@ export class SurveyComponent implements OnInit, OnDestroy {
     answers.get(`${0}.answer`).setValue(`Câu trả lời 1`);
   }
 
-  setDataForm(data) {
+  setDataForm(data: { name: any; questions: any[]; }) {
     if (!data) { return; }
     this.surveyForm.get('name').setValue(data.name);
-    data.questions.forEach((item, index) => {
+    data.questions.forEach((item: { question: any; type: any; answers: any[]; }, index: any) => {
       this.questions.push(this.createQuestion());
       this.questions.get(`${index}.question`).setValue(item.question);
       this.questions.get(`${index}.type`).setValue(item.type);
-      item.answers.forEach((element, i) => {
+      item.answers.forEach((element: any, i: any) => {
         const answers = this.questions.get(`${index}.answers`) as FormArray;
         answers.push(this.createAnswer());
         answers.get(`${i}.answer`).setValue(element)
@@ -124,12 +127,12 @@ export class SurveyComponent implements OnInit, OnDestroy {
     }, 20);
   }
 
-  removeQuestion(indexQ) {
+  removeQuestion(indexQ: number) {
     if (this.questions.length === 1) { return; }
     this.questions.removeAt(indexQ);
   }
 
-  addAnswer(indexQ) {
+  addAnswer(indexQ: string) {
     const answers = this.questions.get(`${indexQ}.answers`) as FormArray;
     answers.push(this.createAnswer());
     answers.get(`${answers.length - 1}.answer`).setValue(`Câu trả lời ${answers.length}`);
@@ -139,7 +142,7 @@ export class SurveyComponent implements OnInit, OnDestroy {
     }, 20);
   }
 
-  removeAnswer(indexQ, indexA) {
+  removeAnswer(indexQ: any, indexA: number) {
     const answers = this.questions.get(`${indexQ}.answers`) as FormArray;
     answers.removeAt(indexA);
   }
@@ -152,13 +155,13 @@ export class SurveyComponent implements OnInit, OnDestroy {
 
   createRequestBody() {
     const questions = [];
-    this.questions.value.forEach((element, index) => {
+    this.questions.value.forEach((element: { question: any; type: QuestionType; answers: any[]; }, index: any) => {
       const question = {}
       question['question'] = element.question;
       question['type'] = element.type;
       const answers = [];
       if (element.type === this.questType.checkbox || element.type === this.questType.radio) {
-        element.answers.forEach(item => {
+        element.answers.forEach((item: { answer: any; }) => {
           answers.push(item.answer)
         });
       }
@@ -170,8 +173,25 @@ export class SurveyComponent implements OnInit, OnDestroy {
       questions,
     }
   }
+  dragStart(event: CdkDragStart) {
+    this._currentIndex = this.questionType.indexOf(event.source.data); // Get index of dragged type
+    this._currentField = this.child.nativeElement.children[this._currentIndex]; // Store HTML field
+    console.log(this.child.nativeElement.children[this._currentIndex] === this._currentField)
+
+  }
+
+  moved(event: CdkDragMove) {
+    // Check if stored HTML field is as same as current field
+    if (this.child.nativeElement.children[this._currentIndex] !== this._currentField) {
+      // Replace current field, basically replaces placeholder with old HTML content
+      console.log(this._currentField)
+      this.child.nativeElement.replaceChild(this._currentField, this.child.nativeElement.children[this._currentIndex]);
+    }
+  }
 
   itemDropped(event: CdkDragDrop<any[]>, indexQ?: number) {
+    console.log(this.child);
+
     // currentIndex: questionIndex
     if (event.previousContainer === event.container) {
       const dir = event.currentIndex > event.previousIndex ? 1 : -1;
@@ -196,7 +216,7 @@ export class SurveyComponent implements OnInit, OnDestroy {
     }
   }
 
-  setControl(from, dir, to, controls: FormArray) {
+  setControl(from: number, dir: number, to: number, controls: FormArray) {
     const temp = controls.at(from);
     for (let i = from; i * dir < to * dir; i = i + dir) {
       const current = controls.at(i + dir);
