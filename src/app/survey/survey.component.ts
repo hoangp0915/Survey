@@ -7,6 +7,7 @@ import { DragulaService } from 'ng2-dragula';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
 
 export enum QuestionType {
   rating = 'rating',
@@ -30,11 +31,12 @@ export class SurveyComponent implements OnInit, OnDestroy {
   listQuestion: string[] = ['1', '2', '3'];
   listQuestionType = [];
   lisSub: Subscription[] = [];
+  surveyCode;
   questionType = [
     {
       title: 'Đánh giá',
       type: this.questType.rating,
-      icon: ''
+      icon: 'star'
     },
     {
       title: 'Nhiều lựa chọn',
@@ -52,11 +54,20 @@ export class SurveyComponent implements OnInit, OnDestroy {
       icon: ''
     }
   ];
-  constructor(private getDataService: GetDataService, private fb: FormBuilder) {
+  constructor(private getDataService: GetDataService, private fb: FormBuilder, private route: ActivatedRoute) {
     this.createForm();
   }
   ngOnInit(): void {
-    this.setDefaultData()
+    this.route.paramMap.subscribe(params => {
+      this.surveyCode = params.get('id');
+      if (this.surveyCode) {
+        this.getDataService.getDataByCode().subscribe(res => {
+          this.setDataForm(res);
+        })
+      } else {
+        this.setDefaultData()
+      }
+    })
   }
   createForm() {
     this.surveyForm = this.fb.group({
@@ -89,11 +100,16 @@ export class SurveyComponent implements OnInit, OnDestroy {
 
   setDataForm(data) {
     if (!data) { return; }
-    this.surveyForm.value.name = data.name ? data.name : '';
-    data.questions.forEach(question => {
-      this.questions.push(this.createAnswer());
-      this.questions.get('question').setValue(question.question ? question.question : '');
-      this.questions.get('type').setValue(question.type);
+    this.surveyForm.get('name').setValue(data.name);
+    data.questions.forEach((item, index) => {
+      this.questions.push(this.createQuestion());
+      this.questions.get(`${index}.question`).setValue(item.question);
+      this.questions.get(`${index}.type`).setValue(item.type);
+      item.answers.forEach((element, i) => {
+        const answers = this.questions.get(`${index}.answers`) as FormArray;
+        answers.push(this.createAnswer());
+        answers.get(`${i}.answer`).setValue(element)
+      });
     });
   }
 
@@ -129,7 +145,30 @@ export class SurveyComponent implements OnInit, OnDestroy {
   }
 
   save() {
-    console.log(this.surveyForm.value);
+    this.getDataService.createSurvey(this.createRequestBody()).subscribe((res) => {
+      console.log(res);
+    })
+  }
+
+  createRequestBody() {
+    const questions = [];
+    this.questions.value.forEach((element, index) => {
+      const question = {}
+      question['question'] = element.question;
+      question['type'] = element.type;
+      const answers = [];
+      if (element.type === this.questType.checkbox || element.type === this.questType.radio) {
+        element.answers.forEach(item => {
+          answers.push(item.answer)
+        });
+      }
+      question['answers'] = answers;
+      questions.push(question);
+    });
+    return {
+      name: this.surveyForm.get('name').value,
+      questions,
+    }
   }
 
   itemDropped(event: CdkDragDrop<any[]>, indexQ?: number) {
